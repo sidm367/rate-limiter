@@ -10,7 +10,26 @@ import java.net.InetSocketAddress;
 
 public class MyHttpServer {
     public static void main(String[] args) throws IOException {
-        RateLimiter rateLimiter = new FixedWindowRateLimiter(10);
+        System.out.println("Argument received: '" + args[0] + "'");
+        if(args.length == 0) {
+            System.out.println("Select the rate limiting algorithm to enforce");
+            return;
+        }
+        String algorithm = args[0].toLowerCase();
+
+        RateLimiter rateLimiter;
+        switch(algorithm) {
+            case "fixedwindow":
+                rateLimiter = new FixedWindowRateLimiter(10);
+                break;
+            case "slidingwindow":
+                rateLimiter = new SlidingWindowRateLimiter(20);
+                break;
+            default:
+                System.out.println("rate limiting algorithcm not supported");
+                rateLimiter = null;
+                break;
+        }
 
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
         server.createContext("/", new MyHandler(rateLimiter));
@@ -21,9 +40,11 @@ public class MyHttpServer {
 
     static class MyHandler implements HttpHandler {
         private final RateLimiter rateLimiter;
+        //private final RateLimiter rateLimiter2;
 
         public MyHandler(RateLimiter rateLimiter){
             this.rateLimiter = rateLimiter;
+            //this.rateLimiter2 = rateLimiter2;
         }
         @Override
         public void handle(HttpExchange exchange) throws IOException {
